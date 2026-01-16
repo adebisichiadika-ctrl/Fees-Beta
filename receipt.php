@@ -46,11 +46,19 @@ while($row=$payments->fetch_array()){
 			<p>Student: <b><?php echo ucwords($sname) ?></b></p>
 			<p>Course/Level: <b><?php echo $class ?></b></p>
 		</div>
-		<?php if($_GET['pid'] > 0): ?>
+		<?php if($_GET['pid'] > 0): 
+			// Use payment_date if available, otherwise use date_created
+			$display_date = isset($pay_arr[$_GET['pid']]['payment_date']) && !empty($pay_arr[$_GET['pid']]['payment_date']) 
+				? $pay_arr[$_GET['pid']]['payment_date'] 
+				: $pay_arr[$_GET['pid']]['date_created'];
+		?>
 		<div class="w-50">
-			<p>Payment Date: <b><?php echo isset($pay_arr[$_GET['pid']]) ? date("M d,Y",strtotime($pay_arr[$_GET['pid']]['date_created'])): '' ?></b></p>
+			<p>Payment Date: <b><?php echo isset($pay_arr[$_GET['pid']]) ? date("M d, Y",strtotime($display_date)): '' ?></b></p>
 			<p>Paid Amount: <b><?php echo isset($pay_arr[$_GET['pid']]) ? number_format($pay_arr[$_GET['pid']]['amount'],2): '' ?></b></p>
 			<p>Remarks: <b><?php echo isset($pay_arr[$_GET['pid']]) ? $pay_arr[$_GET['pid']]['remarks']: '' ?></b></p>
+			<?php if(isset($pay_arr[$_GET['pid']]['receipt_file']) && !empty($pay_arr[$_GET['pid']]['receipt_file'])): ?>
+			<p>Receipt: <a href="assets/uploads/receipts/<?php echo $pay_arr[$_GET['pid']]['receipt_file'] ?>" target="_blank" class="btn btn-sm btn-outline-success"><i class="fa fa-file"></i> View Uploaded Receipt</a></p>
+			<?php endif; ?>
 		</div>
 		<?php endif; ?>
 	</div>
@@ -97,9 +105,11 @@ while($row=$payments->fetch_array()){
 						foreach ($pay_arr as $row) {
 							if($row["id"] <= $_GET['pid'] || $_GET['pid'] == 0){
 							$ptotal += $row['amount'];
+							// Use payment_date if available, otherwise use date_created
+							$row_date = !empty($row['payment_date']) ? $row['payment_date'] : $row['date_created'];
 					?>
 					<tr>
-						<td><b><?php echo date("Y-m-d",strtotime($row['date_created'])) ?></b></td>
+						<td><b><?php echo date("Y-m-d",strtotime($row_date)) ?></b></td>
 						<td class='text-right'><b><?php echo number_format($row['amount']) ?></b></td>
 					</tr>
 					<?php
