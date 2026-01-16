@@ -75,6 +75,8 @@ CREATE TABLE `payments` (
   `ef_id` int(30) NOT NULL,
   `amount` float NOT NULL,
   `remarks` text NOT NULL,
+  `payment_date` date DEFAULT NULL,
+  `receipt_file` varchar(255) DEFAULT NULL,
   `date_created` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
