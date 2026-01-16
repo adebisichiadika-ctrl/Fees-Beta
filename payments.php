@@ -20,27 +20,30 @@
 							<thead>
 								<tr>
 									<th class="text-center">#</th>
-									<th class="">Date</th>
+									<th class="">Payment Date</th>
 									<th class="">ID No.</th>
 									<th class="">EF No.</th>
 									<th class="">Name</th>
 									<th class="">Paid Amount</th>
+									<th class="">Receipt</th>
 									<th class="text-center">Action</th>
 								</tr>
 							</thead>
 							<tbody>
 								<?php 
 								$i = 1;
-								$payments = $conn->query("SELECT p.*,s.name as sname, ef.ef_no,s.id_no FROM payments p inner join student_ef_list ef on ef.id = p.ef_id inner join student s on s.id = ef.student_id order by unix_timestamp(p.date_created) desc ");
+								$payments = $conn->query("SELECT p.*,s.name as sname, ef.ef_no,s.id_no FROM payments p inner join student_ef_list ef on ef.id = p.ef_id inner join student s on s.id = ef.student_id order by unix_timestamp(COALESCE(p.payment_date, p.date_created)) desc ");
 								if($payments->num_rows > 0):
 								while($row=$payments->fetch_assoc()):
 									$paid = $conn->query("SELECT sum(amount) as paid FROM payments where ef_id=".$row['id']);
 									$paid = $paid->num_rows > 0 ? $paid->fetch_array()['paid']:'';
+									// Use payment_date if available, otherwise use date_created
+									$display_date = !empty($row['payment_date']) ? $row['payment_date'] : $row['date_created'];
 								?>
 								<tr>
 									<td class="text-center"><?php echo $i++ ?></td>
 									<td>
-										<p> <b><?php echo date("M d,Y H:i A",strtotime($row['date_created'])) ?></b></p>
+										<p> <b><?php echo date("M d, Y",strtotime($display_date)) ?></b></p>
 									</td>
 									<td>
 										<p> <b><?php echo $row['id_no'] ?></b></p>
@@ -55,6 +58,15 @@
 										<p> <b><?php echo number_format($row['amount'],2) ?></b></p>
 									</td>
 									<td class="text-center">
+										<?php if(!empty($row['receipt_file'])): ?>
+											<a href="assets/uploads/receipts/<?php echo $row['receipt_file'] ?>" target="_blank" class="btn btn-sm btn-outline-success" title="View Receipt">
+												<i class="fa fa-file-image"></i> View
+											</a>
+										<?php else: ?>
+											<span class="text-muted">No receipt</span>
+										<?php endif; ?>
+									</td>
+									<td class="text-center">
 										<button class="btn btn-sm btn-outline-primary view_payment" type="button" data-id="<?php echo $row['id'] ?>" data-ef_id="<?php echo $row['ef_id'] ?>">View</button>
 										<button class="btn btn-sm btn-outline-primary edit_payment" type="button" data-id="<?php echo $row['id'] ?>" >Edit</button>
 										<button class="btn btn-sm btn-outline-danger delete_payment" type="button" data-id="<?php echo $row['id'] ?>">Delete</button>
@@ -65,7 +77,7 @@
 									else:
 								?>
 								<tr>
-									<th class="text-center" colspan="7">No data.</th>
+									<th class="text-center" colspan="8">No data.</th>
 								</tr>
 								<?php
 									endif;
