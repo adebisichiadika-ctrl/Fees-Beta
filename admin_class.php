@@ -328,6 +328,36 @@ Class Action {
 				}
 			}
 		}
+		
+		// Handle receipt file upload
+		if(isset($_FILES['receipt_file']) && $_FILES['receipt_file']['tmp_name'] != ''){
+			$allowed_types = array('jpg', 'jpeg', 'png', 'gif', 'pdf');
+			$file_ext = strtolower(pathinfo($_FILES['receipt_file']['name'], PATHINFO_EXTENSION));
+			
+			if(!in_array($file_ext, $allowed_types)){
+				return json_encode(array('status'=>2, 'message'=>'Invalid file type. Allowed: JPG, PNG, GIF, PDF'));
+			}
+			
+			// Check file size (5MB max)
+			if($_FILES['receipt_file']['size'] > 5 * 1024 * 1024){
+				return json_encode(array('status'=>2, 'message'=>'File size too large. Maximum 5MB allowed.'));
+			}
+			
+			// Create receipts directory if it doesn't exist
+			$upload_dir = 'assets/uploads/receipts/';
+			if(!is_dir($upload_dir)){
+				mkdir($upload_dir, 0777, true);
+			}
+			
+			// Generate unique filename
+			$fname = 'receipt_' . strtotime(date('Y-m-d H:i:s')) . '_' . uniqid() . '.' . $file_ext;
+			$move = move_uploaded_file($_FILES['receipt_file']['tmp_name'], $upload_dir . $fname);
+			
+			if($move){
+				$data .= ", receipt_file = '$fname' ";
+			}
+		}
+		
 		if(empty($id)){
 			$save = $this->db->query("INSERT INTO payments set $data");
 			if($save)
