@@ -8,7 +8,7 @@ if(isset($_GET['id'])){
 }
 ?>
 <div class="container-fluid">
-	<form id="manage-payment">
+	<form id="manage-payment" enctype="multipart/form-data">
 		<div id="msg"></div>
 		<input type="hidden" name="id" value="<?php echo isset($id) ? $id : '' ?>">
 		<div class="form-group">
@@ -26,17 +26,35 @@ if(isset($_GET['id'])){
 				<?php endwhile; ?>
 			</select>
 		</div>
-		 <div class="form-group">
+		<div class="form-group">
             <label for="" class="control-label">Outstanding Balance</label>
             <input type="text" class="form-control text-right" id="balance"  value="" required readonly>
+        </div>
+        <div class="form-group">
+            <label for="" class="control-label">Payment Date</label>
+            <input type="date" class="form-control" name="payment_date" id="payment_date" value="<?php echo isset($payment_date) && !empty($payment_date) ? date('Y-m-d', strtotime($payment_date)) : date('Y-m-d') ?>" required>
+            <small class="text-muted">Select the actual date the payment was made</small>
         </div>
         <div class="form-group">
             <label for="" class="control-label">Amount</label>
             <input type="text" class="form-control text-right" name="amount"  value="<?php echo isset($amount) ? number_format($amount) :0 ?>" required>
         </div>
         <div class="form-group">
-            <label for="" class="control-label">Remakrs</label>
+            <label for="" class="control-label">Remarks</label>
             <textarea name="remarks" id="" cols="30" rows="3" class="form-control" required=""><?php echo isset($remarks) ? $remarks :'' ?></textarea>
+        </div>
+        <div class="form-group">
+            <label for="" class="control-label">Upload Receipt</label>
+            <input type="file" class="form-control" name="receipt_file" id="receipt_file" accept=".jpg,.jpeg,.png,.pdf,.gif">
+            <small class="text-muted">Accepted formats: JPG, PNG, PDF, GIF (Max 5MB)</small>
+            <?php if(isset($receipt_file) && !empty($receipt_file)): ?>
+            <div class="mt-2">
+                <span class="text-success"><i class="fa fa-check-circle"></i> Current receipt: </span>
+                <a href="assets/uploads/receipts/<?php echo $receipt_file ?>" target="_blank" class="btn btn-sm btn-outline-info">
+                    <i class="fa fa-eye"></i> View Current Receipt
+                </a>
+            </div>
+            <?php endif; ?>
         </div>
 	</form>
 </div>
@@ -54,8 +72,12 @@ if(isset($_GET['id'])){
 		start_load()
 		$.ajax({
 			url:'ajax.php?action=save_payment',
-			method:'POST',
-			data:$(this).serialize(),
+			data: new FormData($(this)[0]),
+			cache: false,
+			contentType: false,
+			processData: false,
+			method: 'POST',
+			type: 'POST',
 			error:err=>{
 				console.log(err)
 				end_load()
@@ -74,6 +96,9 @@ if(isset($_GET['id'])){
 								},500)
 							},500)
 						},500)
+				} else if(resp.status == 2){
+					$('#msg').html('<div class="alert alert-danger">'+resp.message+'</div>')
+					end_load()
 				}
 			}
 		})
